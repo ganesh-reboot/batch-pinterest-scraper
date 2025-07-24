@@ -50,7 +50,7 @@ def submit_job(email, input_strings):
     runnable = batch_v1.Runnable()
     runnable.container.image_uri = IMAGE_URI
     runnable.container.entrypoint = "python"
-    runnable.container.commands = ["scraper.py"] + email + input_strings
+    runnable.container.commands = ["scraper.py"] + [email] + input_strings
 
     task_spec = batch_v1.TaskSpec(
         runnables=[runnable],
