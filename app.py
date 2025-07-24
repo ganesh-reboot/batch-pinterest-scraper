@@ -42,7 +42,7 @@ def list_completed_jobs_for_user(user_email):
 
 
 
-def submit_job(input_strings):
+def submit_job(email, input_strings):
     client = batch_v1.BatchServiceClient(credentials=credentials)
     parent = f"projects/{PROJECT_ID}/locations/{REGION}"
     job_id = f"scraper-job-{uuid.uuid4().hex[:8]}"
@@ -50,7 +50,7 @@ def submit_job(input_strings):
     runnable = batch_v1.Runnable()
     runnable.container.image_uri = IMAGE_URI
     runnable.container.entrypoint = "python"
-    runnable.container.commands = ["scraper.py"] + input_strings
+    runnable.container.commands = ["scraper.py"] + email + input_strings
 
     task_spec = batch_v1.TaskSpec(
         runnables=[runnable],
@@ -129,7 +129,7 @@ if st.button("🚀 Submit Job"):
     else:
         with st.spinner("Submitting job..."):
             try:
-                job_name = submit_job(input_strings)
+                job_name = submit_job(st.user.email.replace("@", "_at_").replace(".", ""), input_strings)
                 st.success(f"✅ Job submitted: `{job_name}`")
             except Exception as e:
                 st.error("❌ Failed to submit job.")
