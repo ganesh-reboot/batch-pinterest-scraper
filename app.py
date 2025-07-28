@@ -151,7 +151,9 @@ except Exception as e:
 
 # --- GCS FILE TABLE ---
 st.header("Job Results")
-client = storage.Client()
+client = storage.Client(
+    project=st.secrets["gcp"]["project_id"], 
+    credentials=credentials)
 bucket_name = st.secrets.gcp.bucket_name  # or hardcode your bucket name
 bucket = client.bucket(bucket_name)
 
