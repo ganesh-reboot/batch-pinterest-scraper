@@ -24,7 +24,7 @@ def list_running_jobs_for_user(user_email):
     running_jobs = [
         job for job in all_jobs
         if job.labels.get("user") == user_label and
-           job.status.state in [batch_v1.JobStatus.State.RUNNING, batch_v1.JobStatus.State.QUEUED]
+           job.status.state in [batch_v1.JobStatus.State.RUNNING, batch_v1.JobStatus.State.QUEUED, batch_v1.JobStatus.State.SCHEDULED]
     ]
 
     return running_jobs
