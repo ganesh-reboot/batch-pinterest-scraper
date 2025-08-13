@@ -29,20 +29,20 @@ def list_running_jobs_for_user(user_email):
 
     return running_jobs
 
-def list_completed_jobs_for_user(user_email):
-    client = batch_v1.BatchServiceClient(credentials=credentials)
-    parent = f"projects/{PROJECT_ID}/locations/{REGION}"
+# def list_completed_jobs_for_user(user_email):
+#     client = batch_v1.BatchServiceClient(credentials=credentials)
+#     parent = f"projects/{PROJECT_ID}/locations/{REGION}"
 
-    all_jobs = client.list_jobs(parent=parent)
+#     all_jobs = client.list_jobs(parent=parent)
 
-    user_label = user_email.replace("@", "_at_").replace(".", "")
-    completed_jobs = [
-        job for job in all_jobs
-        if job.labels.get("user") == user_label and
-           job.status.state in [batch_v1.JobStatus.State.SUCCEEDED, batch_v1.JobStatus.State.FAILED]
-    ]
+#     user_label = user_email.replace("@", "_at_").replace(".", "")
+#     completed_jobs = [
+#         job for job in all_jobs
+#         if job.labels.get("user") == user_label and
+#            job.status.state in [batch_v1.JobStatus.State.SUCCEEDED, batch_v1.JobStatus.State.FAILED]
+#     ]
 
-    return completed_jobs
+#     return completed_jobs
 
 
 
@@ -94,7 +94,7 @@ IMAGE_URI = st.secrets.gcp.image_uri
 BUCKET_NAME = st.secrets.gcp.bucket_name  # Make sure you have this in secrets.toml
 
 # --- PAGE SETUP ---
-st.set_page_config(page_title="Google Auth + Batch Job")
+st.set_page_config(page_title="Pinterest Scraper GCP")
 st.title("Pinterest Scraper")
 
 # --- AUTH ---
@@ -129,13 +129,28 @@ if st.button("Start Scraper"):
                 st.error("❌ Failed to submit job.")
                 st.exception(e)
 
+with st.expander("❓ Help / Debug Instructions"):
+    st.markdown("""
+**Taking too long to get results?**  
+There might be a large number of Pinterest boards for certain keywords, and the page loads via infinite scroll. Be patient or try a more niche keyword to speed things up.
+
+**Getting 0 pins and boards?**  
+That might actually be true! But if you've **verified manually** that the keyword shows results on Pinterest, let the team know in the `#data-team-checks` Slack channel.
+
+**❌ Error in the scraper?**  
+If you're seeing an error message (usually shown in red with a traceback), please:
+- Take a **screenshot** of the error
+- Include the **keyword(s)** you used
+- Share it with the team so we can replicate and fix it.
+    """)
+
 # --- JOB TABLE ---
-st.header("Job Status")
+st.header("Running Jobs")
 try:
     running = list_running_jobs_for_user(st.user.email)
-    completed = list_completed_jobs_for_user(st.user.email)
+    # completed = list_completed_jobs_for_user(st.user.email)
 
-    all_jobs = running + completed
+    all_jobs = running
     job_data = [
         {"Job Name": job.name.split('/')[-1], "Status": job.status.state.name}
         for job in all_jobs
