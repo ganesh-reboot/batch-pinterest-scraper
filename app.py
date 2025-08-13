@@ -49,7 +49,7 @@ def list_running_jobs_for_user(user_email):
 def submit_job(email, input_strings):
     client = batch_v1.BatchServiceClient(credentials=credentials)
     parent = f"projects/{PROJECT_ID}/locations/{REGION}"
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     job_id = f"job-{input_strings[0].strip().lower().replace(' ', '-')}-{timestamp}"
 
     runnable = batch_v1.Runnable()
@@ -134,6 +134,9 @@ with st.expander("❓ Help / Debug Instructions"):
 **Taking too long to get results?**  
 There might be a large number of Pinterest boards for certain keywords, and the page loads via infinite scroll. Be patient or try a more niche keyword to speed things up.
 
+**Stuck with the same status?** 
+Try refreshing the page and if the status is the same (other than running or sheduled) over a substantial do let the data team know.
+
 **Getting 0 pins and boards?**  
 That might actually be true! But if you've **verified manually** that the keyword shows results on Pinterest, let the team know in the `#data-team-checks` Slack channel.
 
@@ -179,10 +182,36 @@ user_prefix = st.user.email.replace("@", "_at_").replace(".", "")
 blobs = list(client.list_blobs(bucket, prefix=f"{user_prefix}/"))
 csv_files = [blob.name for blob in blobs if blob.name.endswith(".csv")]
 
+# if not csv_files:
+#     st.info("No result files found yet.")
+# else:
+#     for file_name in sorted(csv_files, reverse=True):
+#         with st.expander(f"📂 {file_name.split('/')[-1]}"):
+#             blob = bucket.blob(file_name)
+#             file_bytes = blob.download_as_bytes()
+#             df = pd.read_csv(io.BytesIO(file_bytes))
+
+#             st.dataframe(df, use_container_width=True)
+
+#             st.download_button(
+#                 label="⬇️ Download CSV",
+#                 data=file_bytes,
+#                 file_name=file_name.split("/")[-1],
+#                 mime="text/csv"
+#             )
 if not csv_files:
     st.info("No result files found yet.")
 else:
-    for file_name in sorted(csv_files, reverse=True):
+    def extract_timestamp(path):
+        """Extract datetime object from GCS file path."""
+        filename = path.split("/")[-1]  # e.g., keyword_2025-08-13T14:32:45.csv
+        ts_str = filename.split("_")[-1].replace(".csv", "")
+        return datetime.strptime(ts_str, "%Y-%m-%dT%H:%M:%S")
+
+    # Sort by extracted timestamp (latest first)
+    csv_files_sorted = sorted(csv_files, key=extract_timestamp, reverse=True)
+
+    for file_name in csv_files_sorted:
         with st.expander(f"📂 {file_name.split('/')[-1]}"):
             blob = bucket.blob(file_name)
             file_bytes = blob.download_as_bytes()
