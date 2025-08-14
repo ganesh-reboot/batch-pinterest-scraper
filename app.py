@@ -17,7 +17,6 @@ def list_running_jobs_for_user(user_email):
     client = batch_v1.BatchServiceClient(credentials=credentials)
     parent = f"projects/{PROJECT_ID}/locations/{REGION}"
 
-    # Fetch all jobs
     all_jobs = client.list_jobs(parent=parent)
 
     user_label = user_email.replace("@", "_at_").replace(".", "")
@@ -91,13 +90,11 @@ def submit_job(email, input_strings):
 PROJECT_ID = st.secrets.gcp.project_id
 REGION = st.secrets.gcp.region
 IMAGE_URI = st.secrets.gcp.image_uri
-BUCKET_NAME = st.secrets.gcp.bucket_name  # Make sure you have this in secrets.toml
+BUCKET_NAME = st.secrets.gcp.bucket_name
 
-# --- PAGE SETUP ---
 st.set_page_config(page_title="Pinterest Scraper GCP")
 st.title("Pinterest Scraper")
 
-# --- AUTH ---
 if not st.user.is_logged_in:
     st.warning("You must be logged in to submit a job.")
     if st.button("Log in with Google", type="primary", icon=":material/login:"):
@@ -112,7 +109,6 @@ if st.button("Log out", type="secondary", icon=":material/logout:"):
 
 user_email_safe = st.user.email.replace("@", "_at_").replace(".", "")
 
-# --- INPUT ---
 st.subheader("Submit a scraping job")
 input_text = st.text_area("Enter one keyword per line:")
 
@@ -147,12 +143,11 @@ If you're seeing an error message (usually shown in red with a traceback), pleas
 - Share it with the team so we can replicate and fix it.
     """)
 
-# --- JOB TABLE ---
 st.header("Running Jobs")
 try:
     running = list_running_jobs_for_user(st.user.email)
     # completed = list_completed_jobs_for_user(st.user.email)
-
+    # all_jobs = running + completed
     all_jobs = running
     job_data = [
         {"Job Name": job.name.split('/')[-1], "Status": job.status.state.name}
@@ -167,38 +162,20 @@ except Exception as e:
     st.error("Failed to fetch job status.")
     st.exception(e)
 
-# --- GCS FILE TABLE ---
 st.header("Job Results")
 client = storage.Client(
     project=st.secrets["gcp"]["project_id"], 
     credentials=credentials)
-bucket_name = st.secrets.gcp.bucket_name  # or hardcode your bucket name
+bucket_name = st.secrets.gcp.bucket_name
 bucket = client.bucket(bucket_name)
 
-# Convert email to match file naming convention
+
 user_prefix = st.user.email.replace("@", "_at_").replace(".", "")
 
-# List CSV result files for this user
+
 blobs = list(client.list_blobs(bucket, prefix=f"{user_prefix}/"))
 csv_files = [blob.name for blob in blobs if blob.name.endswith(".csv")]
 
-# if not csv_files:
-#     st.info("No result files found yet.")
-# else:
-#     for file_name in sorted(csv_files, reverse=True):
-#         with st.expander(f"📂 {file_name.split('/')[-1]}"):
-#             blob = bucket.blob(file_name)
-#             file_bytes = blob.download_as_bytes()
-#             df = pd.read_csv(io.BytesIO(file_bytes))
-
-#             st.dataframe(df, use_container_width=True)
-
-#             st.download_button(
-#                 label="⬇️ Download CSV",
-#                 data=file_bytes,
-#                 file_name=file_name.split("/")[-1],
-#                 mime="text/csv"
-#             )
 if not csv_files:
     st.info("No result files found yet.")
 else:
@@ -208,20 +185,35 @@ else:
         ts_str = filename.split("_")[-1].replace(".csv", "")
         return datetime.strptime(ts_str, "%Y-%m-%dT%H:%M:%S")
 
-    # Sort by extracted timestamp (latest first)
     csv_files_sorted = sorted(csv_files, key=extract_timestamp, reverse=True)
 
+    table_data = []
     for file_name in csv_files_sorted:
-        with st.expander(f"📂 {file_name.split('/')[-1]}"):
-            blob = bucket.blob(file_name)
-            file_bytes = blob.download_as_bytes()
-            df = pd.read_csv(io.BytesIO(file_bytes))
+        ts = extract_timestamp(file_name)
+        display_name = file_name.split("/")[-1]
+        table_data.append({"File": display_name, "Start Time": ts})
 
-            st.dataframe(df, use_container_width=True)
+    for row in table_data:
+        col1, col2, col3 = st.columns([3, 2, 1])
+        col1.write(row["File"])
+        col2.write(row["Start Time"].strftime("%Y-%m-%d %H:%M:%S"))
+        if col3.button("View", key=row["File"]):
+            st.session_state.selected_file = row["File"]
 
-            st.download_button(
-                label="⬇️ Download CSV",
-                data=file_bytes,
-                file_name=file_name.split("/")[-1],
-                mime="text/csv"
-            )
+    if "selected_file" in st.session_state:
+        st.markdown("---")
+        st.subheader(f"{st.session_state.selected_file}")
+
+        full_path = next(f for f in csv_files_sorted if f.endswith(st.session_state.selected_file))
+        blob = bucket.blob(full_path)
+        file_bytes = blob.download_as_bytes()
+        df = pd.read_csv(io.BytesIO(file_bytes))
+
+        st.dataframe(df, use_container_width=True)
+
+        st.download_button(
+            label="⬇️ Download CSV",
+            data=file_bytes,
+            file_name=st.session_state.selected_file,
+            mime="text/csv"
+        )
