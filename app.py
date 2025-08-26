@@ -1,5 +1,4 @@
 import streamlit as st
-import authlib
 import uuid
 from google.cloud import batch_v1
 from google.protobuf import duration_pb2
@@ -99,6 +98,13 @@ if not st.user.is_logged_in:
     st.warning("You must be logged in to submit a job.")
     if st.button("Log in with Google", type="primary", icon=":material/login:"):
         st.login()
+    st.stop()
+
+allowed_domain = "rebootonline.com"
+user_email = st.user.email
+
+if not user_email.endswith(f"@{allowed_domain}"):
+    st.error("Access denied: only @rebootonline.com users are allowed.")
     st.stop()
 
 st.success(f"Hello, **{st.user.name}**!")
