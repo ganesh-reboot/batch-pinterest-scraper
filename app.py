@@ -9,8 +9,6 @@ from google.cloud import storage
 import io
 from datetime import datetime
 
-creds_dict = json.loads(st.secrets["gcp"]["google_credentials"])
-credentials = service_account.Credentials.from_service_account_info(creds_dict)
 
 def list_running_jobs_for_user(user_email):
     client = batch_v1.BatchServiceClient(credentials=credentials)
@@ -86,11 +84,6 @@ def submit_job(email, input_strings):
     response = client.create_job(parent=parent, job=job, job_id=job_id)
     return response.name
 
-PROJECT_ID = st.secrets.gcp.project_id
-REGION = st.secrets.gcp.region
-IMAGE_URI = st.secrets.gcp.image_uri
-BUCKET_NAME = st.secrets.gcp.bucket_name
-
 st.set_page_config(page_title="Pinterest Scraper GCP")
 st.title("Pinterest Scraper")
 
@@ -105,6 +98,9 @@ user_email = st.user.email
 
 if not user_email.endswith(f"@{allowed_domain}"):
     st.error("Access denied: only @rebootonline.com users are allowed.")
+    if st.button("Log out", type="secondary", icon=":material/logout:"):
+        st.logout()
+        st.stop()
     st.stop()
 
 st.success(f"Hello, **{st.user.name}**!")
@@ -112,6 +108,14 @@ st.success(f"Hello, **{st.user.name}**!")
 if st.button("Log out", type="secondary", icon=":material/logout:"):
     st.logout()
     st.stop()
+
+creds_dict = json.loads(st.secrets["gcp"]["google_credentials"])
+credentials = service_account.Credentials.from_service_account_info(creds_dict)
+
+PROJECT_ID = st.secrets.gcp.project_id
+REGION = st.secrets.gcp.region
+IMAGE_URI = st.secrets.gcp.image_uri
+BUCKET_NAME = st.secrets.gcp.bucket_name
 
 user_email_safe = st.user.email.replace("@", "_at_").replace(".", "")
 
