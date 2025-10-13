@@ -55,7 +55,7 @@ def submit_job(email, input_strings):
 
     task_spec = batch_v1.TaskSpec(
         runnables=[runnable],
-        max_run_duration=duration_pb2.Duration(seconds=54000)
+        max_run_duration=duration_pb2.Duration(seconds=86400)
     )
 
     task_group = batch_v1.TaskGroup(task_spec=task_spec)
