@@ -7,3 +7,4 @@ google-cloud-batch
 protobuf
 authlib
 pandas
+streamlit[auth]
