@@ -117,7 +117,7 @@ REGION = st.secrets.gcp.region
 IMAGE_URI = st.secrets.gcp.image_uri
 BUCKET_NAME = st.secrets.gcp.bucket_name
 
-user_email_safe = st.user.email.replace("@", "_at_").replace(".", "")
+user_email_safe = st.user.email.lower().replace("@", "_at_").replace(".", "")
 
 st.subheader("Submit a scraping job")
 input_text = st.text_area("Enter one keyword per line:")
