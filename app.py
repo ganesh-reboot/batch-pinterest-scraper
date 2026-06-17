@@ -155,7 +155,7 @@ If you're seeing an error message (usually shown in red with a traceback), pleas
 
 st.header("Running Jobs")
 try:
-    running = list_running_jobs_for_user(st.user.email)
+    running = list_running_jobs_for_user(user_email_safe)
     # completed = list_completed_jobs_for_user(st.user.email)
     # all_jobs = running + completed
     all_jobs = running
