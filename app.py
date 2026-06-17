@@ -74,7 +74,7 @@ def submit_job(email, input_strings):
         allocation_policy=allocation_policy,
         labels={
         "env": "prod",
-        "user": st.user.email.replace("@", "_at_").replace(".", "")
+        "user": email
     },
         logs_policy=batch_v1.LogsPolicy(
             destination=batch_v1.LogsPolicy.Destination.CLOUD_LOGGING
