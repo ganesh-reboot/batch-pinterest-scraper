@@ -4,7 +4,8 @@ google-api-python-client
 google-cloud-storage
 google-cloud-batch
 protobuf
-streamlit[auth]==1.56.0
+# streamlit[auth]==1.56.0
+streamlit[auth]==1.59.2
 Authlib==1.6.11
 pandas
 httpx
