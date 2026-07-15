@@ -46,7 +46,15 @@ def submit_job(email, input_strings):
     client = batch_v1.BatchServiceClient(credentials=credentials)
     parent = f"projects/{PROJECT_ID}/locations/{REGION}"
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    job_id = f"job-{input_strings[0].strip().lower().replace(' ', '-')}-{timestamp}"
+    
+    slug = input_strings[0].strip().lower().replace(" ", "-")
+    max_length = 60
+    prefix = "job-"
+    available = max_length - len(prefix) - len(timestamp) - 1
+    
+    slug = slug[:available].rstrip("-")
+    
+    job_id = f"{prefix}{slug}-{timestamp}"
 
     runnable = batch_v1.Runnable()
     runnable.container.image_uri = IMAGE_URI
