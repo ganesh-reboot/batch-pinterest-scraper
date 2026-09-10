@@ -113,6 +113,8 @@ if not user_email.endswith(f"@{allowed_domain}"):
 
 st.success(f"Hello, **{st.user.name}**!")
 
+power_user_message = st.empty()
+
 if st.button("Log out", type="secondary", icon=":material/logout:"):
     st.logout()
     st.stop()
@@ -193,6 +195,12 @@ user_prefix = st.user.email.replace("@", "_at_").replace(".", "")
 
 blobs = list(client.list_blobs(bucket, prefix=f"{user_prefix}/"))
 csv_files = [blob.name for blob in blobs if blob.name.endswith(".csv")]
+
+if len(csv_files) >= 25:
+    power_user_message.success(
+        "🏆 **Congratulations, you are now officially a Pinterest Scraper Power User™.** "
+        "(This title has no benefits)"
+    )
 
 if not csv_files:
     st.info("No result files found yet.")
